@@ -235,7 +235,7 @@
       </div>
       <div class="card">
         <h4><span class="dot" style="background:var(--orange)"></span>WQS regression</h4>
-        <p>Weighted Quantile Sum bundles correlated exposures into a single weighted index, estimating one mixture effect plus each variable's weight — robust where OLS coefficients become unstable.</p>
+        <p>Weighted Quantile Sum bundles correlated exposures — here the 2010 home-air pollutants <strong>NO₂, NOₓ, PM10, PM2.5</strong> — into a single weighted index, estimating one mixture effect plus each variable's weight — robust where OLS coefficients become unstable.</p>
       </div>
       <div class="card">
         <h4><span class="dot" style="background:var(--red)"></span>Mediation analysis</h4>
@@ -265,6 +265,9 @@
         <tr><td>Sleep</td><td>Sleep duration (1160), insomnia (1200)</td><td>Outcome / predictor</td></tr>
         <tr><td>Demographics</td><td>Sex (31), birth year (34), age (21022)</td><td>Covariate</td></tr>
         <tr><td>Deprivation (England IMD)</td><td>Income, employment, health, education, housing (26411–26415)</td><td>Predictor</td></tr>
+        <tr><td>Anthropometry</td><td>Body mass index (21001)</td><td>Mediator <span class="tag">new</span></td></tr>
+        <tr><td>Air pollution (2010)</td><td>NO₂, NOₓ, PM10, PM2.5 (24003–24006)</td><td>Predictor / mixture <span class="tag">new</span></td></tr>
+        <tr><td>Greenspace</td><td>Greenspace % within 1 km (24500)</td><td>Predictor / mediator <span class="tag">new</span></td></tr>
         <tr><td>Environment (imagery)</td><td>Places365 scene features → 16 metrics</td><td>Predictor <span class="tag">pending</span></td></tr>
       </tbody>
     </table>
@@ -274,6 +277,7 @@
       <li>Demographics &amp; baseline sleep/insomnia: ~complete (&lt;1% missing).</li>
       <li>Deprivation scores: 13.9% missing (England-only — Scotland/Wales excluded).</li>
       <li>Depression (PHQ) items: 68.8% missing (online mental-health follow-up subset).</li>
+      <li>BMI: 0.6% missing. Air pollution 2010: ~1.5% (NO₂/NOₓ) to ~8% (PM) missing; greenspace: ~12% missing — geographic coverage of the home-location models.</li>
       <li>Repeat-visit instances unused — analysis uses <strong>baseline (instance 0)</strong> only.</li>
     </ul>
     <p class="muted">Missingness is almost entirely <em>structural</em> (who attended which visit / lived in England), not refusal — "prefer not to answer" / "don't know" is ≤0.6% for every field.</p>
@@ -289,6 +293,10 @@
             <option>Sleep duration (h)</option>
             <option>Age (years)</option>
             <option>Depression score</option>
+            <option>Body mass index</option>
+            <option>NO2 pollution</option>
+            <option>PM2.5 pollution</option>
+            <option>Greenspace (%)</option>
           </select>
         </label>
         <div style="flex:1;min-width:280px">
