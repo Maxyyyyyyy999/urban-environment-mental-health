@@ -349,19 +349,22 @@
 
     <div id="r-ols" class="tabpane active">
       <h3>OLS + SHAP — drivers of depression</h3>
-      <p>Outcome = depression score (PHQ items), n = 135,541, R² = 0.039.</p>
+      <p>Outcome = depression score (PHQ items), n = 132,179, R² = 0.045. Now includes <strong>BMI</strong>, <strong>PM2.5 air pollution</strong> and <strong>greenspace</strong>.</p>
       <table>
         <thead><tr><th>Variable</th><th>Std. β</th><th>Direction</th></tr></thead>
         <tbody>
-          <tr><td>Insomnia</td><td class="num">+0.069</td><td class="sig">↑ risk ***</td></tr>
-          <tr><td>Age</td><td class="num">−0.065</td><td class="sig">↓ protective ***</td></tr>
-          <tr><td>Income deprivation</td><td class="num">+0.028</td><td class="sig">↑ risk ***</td></tr>
-          <tr><td>Education deprivation</td><td class="num">+0.019</td><td class="sig">↑ risk ***</td></tr>
-          <tr><td>Sleep duration</td><td class="num">−0.005</td><td class="sig">↓ ***</td></tr>
+          <tr><td>Insomnia</td><td class="num">+0.066</td><td class="sig">↑ risk ***</td></tr>
+          <tr><td>Age</td><td class="num">−0.066</td><td class="sig">↓ protective ***</td></tr>
+          <tr><td>BMI</td><td class="num">+0.042</td><td class="sig">↑ risk ***</td></tr>
+          <tr><td>Income deprivation</td><td class="num">+0.024</td><td class="sig">↑ risk ***</td></tr>
+          <tr><td>Education deprivation</td><td class="num">+0.017</td><td class="sig">↑ risk ***</td></tr>
+          <tr><td>PM2.5 (air pollution)</td><td class="num">+0.006</td><td class="sig">↑ risk **</td></tr>
+          <tr><td>Greenspace</td><td class="num">−0.004</td><td class="sig">↓ protective *</td></tr>
+          <tr><td>Sleep duration</td><td class="num">−0.004</td><td class="sig">↓ **</td></tr>
           <tr><td>Sex / other deprivation</td><td class="num">≈ ±0.00</td><td class="ns">negligible</td></tr>
         </tbody>
       </table>
-      <figure><img src="assets/shap.png" alt="SHAP beeswarm"><figcaption>SHAP importance — age &amp; insomnia dominate; income/education deprivation are real but smaller drivers.</figcaption></figure>
+      <figure><img src="assets/shap.png" alt="SHAP beeswarm"><figcaption>SHAP importance — age &amp; insomnia dominate; <strong>BMI</strong> emerges as the third-strongest driver. Income/education deprivation are real but smaller; PM2.5 and greenspace are significant but modest. <em>Air pollution: PM2.5 shown as a single proxy — the correlated NO₂/NOx/PM family is handled jointly by WQS.</em></figcaption></figure>
     </div>
 
     <div id="r-wqs" class="tabpane">
@@ -459,7 +462,9 @@
     <ul>
       <li><strong>Insomnia &amp; age</strong> dominate every model — consistently, in opposite directions.</li>
       <li><strong>Sleep duration</strong> is U-shaped (too little and too much both worse) — captured by SHAP, hidden by linear coefficients.</li>
+      <li><strong>BMI</strong> emerges as the third-strongest driver (after age &amp; insomnia) once added — higher BMI tracks with higher depression.</li>
       <li><strong>Income &amp; education deprivation</strong> significantly raise depression; the five deprivation domains are highly correlated, motivating the mixture (WQS) approach.</li>
+      <li><strong>Environment:</strong> PM2.5 air pollution (↑) and greenspace (↓) are statistically significant but small — the correlated pollution family is best handled jointly by WQS.</li>
       <li><strong>Mediation:</strong> deprivation → depression is ~95% direct, ~5% via insomnia (CI excludes zero).</li>
       <li>Effect sizes are modest (R² ≈ 0.04) — these are population-level associations, not strong individual predictors, and are associational, not causal.</li>
     </ul>
