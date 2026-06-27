@@ -262,6 +262,27 @@
     <p class="muted">Click to expand the full intuition, the maths, the assumptions, and how each method is used here.</p>
 
     <details class="deep">
+      <summary><span class="dot" style="background:var(--blue)"></span>Places365 ResNet-50 — turning street-view images into features</summary>
+      <div class="body">
+        <h5>What it is</h5>
+        <p>A <strong>convolutional neural network (CNN)</strong> — the standard deep-learning model for images — that is <strong>50 layers deep</strong>. A CNN passes an image through stacked layers that build up visual features: early layers detect edges and textures, middle layers detect parts (foliage, windows, road markings), and deep layers capture whole-scene concepts (a leafy street vs. a dense junction).</p>
+        <h5>The "residual" trick (the Res in ResNet)</h5>
+        <p>Before ResNet (He et al., 2015), very deep networks were hard to train — adding layers made them <em>worse</em> as the learning signal vanished. ResNet adds <strong>skip connections</strong>: each block learns a small residual and adds the original input back, so the signal flows straight through and 50+ layers become trainable.</p>
+        <div class="eq">output = F(x) + x&nbsp;&nbsp;— the block learns the residual F(x), the +x is the shortcut</div>
+        <p>That single idea (~25 million parameters here) made ResNet-50 a workhorse — a sweet spot of accuracy versus compute.</p>
+        <h5>Pre-trained on Places365</h5>
+        <p>This network was trained on the <strong>Places365</strong> dataset — 1.8 million photos across 365 scene categories (parks, highways, residential streets…) — so it already "understands" what environments look like.</p>
+        <h5>Used here as a frozen feature extractor</h5>
+        <p>We do <strong>not</strong> retrain it. We remove its final classification layer and take the second-to-last layer's output — a <strong>2048-number vector</strong> that summarises the image's visual content. "Frozen" means we reuse what the network already learned, which is cheap and works well on limited data.</p>
+        <ul>
+          <li>Each home has <strong>4 street-view headings</strong> (looking N/E/S/W); we extract features from each and <strong>average</strong> them into one 2048-dim vector per location.</li>
+          <li>Those 2048 features become predictors (<code>X</code>) in the regression / mixture / mediation models — letting the model "see" the streetscape through the network's learned representation.</li>
+        </ul>
+        <p class="muted">Status: planned — awaiting home coordinates to link participants to imagery.</p>
+      </div>
+    </details>
+
+    <details class="deep">
       <summary><span class="dot" style="background:var(--green)"></span>OLS + SHAP — average effects, then fair per-person attribution</summary>
       <div class="body">
         <h5>The model</h5>
