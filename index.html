@@ -107,6 +107,19 @@
   .callout{border-left:3px solid var(--blue);background:var(--callout-bg);padding:14px 18px;border-radius:0 8px 8px 0;margin:16px 0}
   .callout.green{border-color:var(--green)}.callout.orange{border-color:var(--orange)}
   .muted{color:var(--light);font-size:13.5px}
+  details.deep{background:var(--card);border:1px solid var(--line);border-radius:9px;margin:10px 0;overflow:hidden}
+  details.deep>summary{cursor:pointer;list-style:none;padding:13px 16px;font-weight:600;color:var(--text-strong);
+    display:flex;align-items:center;gap:10px;user-select:none}
+  details.deep>summary::-webkit-details-marker{display:none}
+  details.deep>summary::before{content:"▸";color:var(--blue);font-size:13px;transition:transform .15s ease}
+  details.deep[open]>summary::before{transform:rotate(90deg)}
+  details.deep>summary:hover{background:var(--hover)}
+  details.deep .body{padding:2px 18px 16px 18px;font-size:14px;color:var(--text);border-top:1px solid var(--line)}
+  details.deep .body h5{margin:14px 0 4px;font-size:13.5px;color:var(--blue);letter-spacing:.02em;text-transform:uppercase}
+  details.deep .body p{margin:6px 0}
+  details.deep .body ul{margin:6px 0 6px 20px}details.deep .body li{margin:3px 0}
+  details.deep .body code{background:var(--card2);padding:1px 6px;border-radius:4px;font-size:13px}
+  details.deep .body .eq{background:var(--card2);border-radius:6px;padding:8px 12px;margin:8px 0;font-family:Consolas,monospace;font-size:13px;color:var(--text-strong);overflow-x:auto}
   @media(max-width:880px){
     body{flex-direction:column}.sidebar{width:100%;height:auto;position:static}
     .main{padding:30px 22px 70px}.g2,.g3,.g4{grid-template-columns:1fr}
@@ -244,6 +257,74 @@
       </div>
     </div>
     <div class="callout"><p style="margin:0" class="muted"><strong>Why several methods?</strong> OLS/SHAP isolate individual effects; WQS handles correlated exposure mixtures; mediation answers <em>through what mechanism</em>. Together they cross-check each finding.</p></div>
+
+    <h3 style="margin-top:26px">For the curious — method deep dives</h3>
+    <p class="muted">Click to expand the full intuition, the maths, the assumptions, and how each method is used here.</p>
+
+    <details class="deep">
+      <summary><span class="dot" style="background:var(--green)"></span>OLS + SHAP — average effects, then fair per-person attribution</summary>
+      <div class="body">
+        <h5>The model</h5>
+        <p>Ordinary Least Squares fits a straight-line relationship by choosing coefficients that minimise the sum of squared errors (observed − predicted)². With every predictor <strong>standardised</strong> (z-scored), each coefficient is the expected change in depression (on the 1–4 scale) for a <strong>one-standard-deviation increase</strong> in that predictor, holding the others fixed.</p>
+        <div class="eq">depression ≈ β₀ + β₁·z₁ + β₂·z₂ + … + βₚ·zₚ</div>
+        <h5>Reading the output</h5>
+        <ul>
+          <li><strong>Sign</strong> = direction (raises vs. lowers depression); <strong>magnitude</strong> = strength on a common scale, so predictors are directly comparable.</li>
+          <li><strong>p-value / confidence interval</strong> = is the effect distinguishable from zero given the noise.</li>
+          <li><strong>R²</strong> = share of depression variance the model explains (here ≈ 0.04 — a real but small population-level signal, not an individual predictor).</li>
+        </ul>
+        <h5>Where OLS falls short</h5>
+        <p>It assumes each effect is <em>linear and additive</em> — one straight slope per variable, no curves or interactions unless you hand-build them. So it reports a single "average" slope that can hide a <strong>U-shape</strong> (e.g. both too little and too much sleep are worse).</p>
+        <h5>What SHAP adds</h5>
+        <p>We train a flexible model (gradient-boosted trees) that <em>can</em> bend and interact, then use <strong>Shapley values</strong> from cooperative game theory to split each individual prediction fairly among its features. A feature's SHAP value is its average marginal contribution across all possible orderings of the features — the unique attribution that is fair in a precise mathematical sense.</p>
+        <div class="eq">f(x) = E[f] + Σⱼ φⱼ(x)&nbsp;&nbsp;— each φⱼ is feature j's signed push on this person's prediction</div>
+        <p>The <strong>beeswarm plot</strong> (one dot per person, colour = feature value, horizontal position = push on predicted depression) then reveals non-linearity and a fair importance ranking OLS cannot — e.g. sleep's U-shape appears as high SHAP at both low and high values.</p>
+        <h5>Why both</h5>
+        <p>OLS gives an interpretable, <em>testable</em> average effect; SHAP gives honest importance and the shape of each effect. When the two agree, we trust the finding.</p>
+      </div>
+    </details>
+
+    <details class="deep">
+      <summary><span class="dot" style="background:var(--orange)"></span>WQS regression — one effect for a whole correlated mixture</summary>
+      <div class="body">
+        <h5>The problem it solves</h5>
+        <p>The four pollutants (NO₂, NOₓ, PM10, PM2.5) — and the five deprivation domains — move together. Feed correlated predictors into OLS and they <strong>split the shared signal unpredictably</strong>: coefficients become unstable, can even flip sign, and there is no single "what does the mixture do" number.</p>
+        <h5>The idea</h5>
+        <p>Score each exposure into <strong>quantiles</strong> (e.g. quartiles 0–3) to put them on a common rank scale, then combine them into one <strong>weighted index</strong>:</p>
+        <div class="eq">WQS = Σⱼ wⱼ · quantile(xⱼ),&nbsp;&nbsp; with wⱼ ≥ 0 and Σⱼ wⱼ = 1</div>
+        <p>Then regress the outcome on that single index:</p>
+        <div class="eq">depression = β₀ + β₁·WQS + covariates</div>
+        <p><strong>β₁</strong> is the overall mixture effect; the <strong>weights wⱼ</strong> tell you how much each pollutant contributes — a built-in ranking of culprits.</p>
+        <h5>How the weights are learned</h5>
+        <p>The data are split into training and validation sets. Weights are estimated over many <strong>bootstrap</strong> resamples (each constrained to be non-negative and sum to 1) and averaged; the mixture effect is then confirmed on the held-out data, guarding against over-fitting.</p>
+        <h5>Key assumption</h5>
+        <p><strong>Directional homogeneity</strong> — all components are assumed to act the same way (all harmful, or all protective). If some help and some harm, classic WQS can mislead; newer variants such as <em>quantile g-computation</em> relax this.</p>
+        <h5>Here</h5>
+        <p>NO₂/NOₓ/PM10/PM2.5 (2010 home estimates) collapse into a single <strong>pollution-burden index</strong> whose effect on depression we estimate, with weights ranking which pollutant dominates. The same machinery can bundle the five correlated deprivation domains.</p>
+      </div>
+    </details>
+
+    <details class="deep">
+      <summary><span class="dot" style="background:var(--red)"></span>Mediation analysis — direct effect vs. working through a mechanism</summary>
+      <div class="body">
+        <h5>The question</h5>
+        <p>When X (say deprivation) is linked to Y (depression), does X act <em>directly</em>, or does it work by changing a <strong>mediator</strong> M (say sleep) that in turn changes Y?</p>
+        <h5>The decomposition</h5>
+        <p>Fit two regressions:</p>
+        <div class="eq">path a:&nbsp; M = α + a·X<br>paths b &amp; c′:&nbsp; Y = γ + c′·X + b·M</div>
+        <ul>
+          <li><strong>Indirect (mediated) effect</strong> = a·b — the part of X's effect that flows through M.</li>
+          <li><strong>Direct effect</strong> = c′ — what's left after accounting for M.</li>
+          <li><strong>Total</strong> = c′ + a·b; &nbsp;<strong>proportion mediated</strong> = a·b ÷ (c′ + a·b).</li>
+        </ul>
+        <h5>Inference</h5>
+        <p>The indirect effect a·b is a <em>product</em> of two estimates, so it is not normally distributed. We build its confidence interval by <strong>bootstrapping</strong> — resampling and refitting thousands of times. If that interval excludes zero, the pathway is statistically real.</p>
+        <h5>Assumptions (for a causal reading)</h5>
+        <p>Correct ordering X → M → Y, and <strong>no unmeasured confounding</strong> of the X–Y, X–M, or M–Y relationships (ideally no X×M interaction, or model it). With observational data these are strong, so we read results as "consistent with," not proof of, a mechanism.</p>
+        <h5>Here</h5>
+        <p>Deprivation → depression is split via sleep/insomnia: roughly <strong>95% direct</strong> and <strong>~5% through sleep</strong>, with a bootstrap CI that excludes zero — a small but genuine sleep pathway.</p>
+      </div>
+    </details>
   </section>
 
   <!-- 06 DATA -->
